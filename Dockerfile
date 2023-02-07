@@ -30,6 +30,4 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Create system user to run Composer and Artisan Commands
 RUN chown -R www-data:www-data \
-       /var/www/ \
-       /var/www/bootstrap/cache \
-       /var/www/storage 
+       /var/www/ 
