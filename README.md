@@ -9,7 +9,7 @@ docker-compose build app
 then
 
 ```bash
-docker-compose up -d
+docker-compose up 
 ```
 
 http://localhost:8000/
