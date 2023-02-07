@@ -1,0 +1,84 @@
+version: "3.7"
+services:
+    app:
+        build:
+            context: ./
+            dockerfile: Dockerfile
+        image: football
+        container_name: football-app
+        restart: unless-stopped
+        working_dir: /var/www/
+        depends_on:
+            - db
+            - nginx
+            - redis
+        volumes:
+            - ./:/var/www
+        networks:
+            - football-network
+    db:
+        image: mysql:8.0
+        container_name: football-db
+        restart: unless-stopped
+        environment:
+            MYSQL_DATABASE: laravel
+            MYSQL_ROOT_PASSWORD: root
+            MYSQL_PASSWORD: root
+            SERVICE_TAGS: dev
+            SERVICE_NAME: mysql
+        healthcheck:
+            test: "mysql $$MYSQL_DATABASE -u$$MYSQL_USER -p$$MYSQL_PASSWORD -e 'SELECT 1;'"
+            interval: 20s
+            timeout: 10s
+            retries: 5
+        volumes:
+            - ./docker-compose/mysql:/docker-entrypoint-initdb.d
+        networks:
+            - football-network
+
+    nginx:
+        image: nginx:alpine
+        container_name: football-nginx
+        restart: unless-stopped
+        ports:
+            - 8000:80
+        volumes:
+            - ./:/var/www
+            - ./docker-compose/nginx:/etc/nginx/conf.d/
+        networks:
+            - football-network
+    redis:
+        image: 'bitnami/redis:latest'
+        environment:
+            - ALLOW_EMPTY_PASSWORD=yes
+        networks:
+            - football-network
+    prepare-node:
+        image: node:18-alpine
+        command: sh -c "npm install && npm run dev"
+        container_name: football-prepare-node
+        restart: "no"
+        working_dir: /var/www/
+        volumes:
+            - ./:/var/www
+        networks:
+            - football-network
+    prepare:
+        image: football
+        container_name: football-prepare
+        restart: "no"
+        working_dir: /var/www/
+        entrypoint: /docker-entrypoint.sh
+        depends_on:
+            - db
+            - nginx
+            - redis
+            - app
+        volumes:
+            - ./docker-entrypoint.sh:/docker-entrypoint.sh
+            - ./:/var/www
+        networks:
+            - football-network
+networks:
+    football-network:
+        driver: bridge
