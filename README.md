@@ -12,6 +12,8 @@ then
 docker-compose up -d
 ```
 
+http://localhost:8000/
+
 ## Test
 
 ```bash
